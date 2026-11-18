@@ -1,4 +1,5 @@
 import ExampleComponent from "../components/ExampleComponent"
+import type { Route } from "./+types/ExampleView"
 
 export default function ExampleView() {
   return (
@@ -9,3 +10,8 @@ export default function ExampleView() {
     </div>
   )
 }
+
+export const meta: Route.MetaFunction = () => [
+  { title: "Example" },
+  { name: "description", content: "Example page." },
+]

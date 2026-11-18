@@ -26,7 +26,7 @@ const camelCase = pascalCase.charAt(0).toLowerCase() + pascalCase.slice(1)
 const constantCase = featureName.toUpperCase().replace(/-/g, "_")
 
 const baseDir = path.resolve("src/features", featureName)
-const routerFilePath = path.resolve("src/router/index.tsx")
+const routerFilePath = path.resolve("src/routes.ts")
 
 if (fs.existsSync(baseDir)) {
   console.error(`⚠️ Feature "${featureName}" already exists.`)
@@ -62,17 +62,13 @@ export type ${pascalCase}RequestPayload = {
 }
 `,
 
-  route: `import type { RouteObject } from "react-router"
+  route: `import { type RouteConfigEntry, route } from "@react-router/dev/routes"
 
 import { ${pascalCase}PagePath } from "../models"
 
-const ${camelCase}Routes: RouteObject[] = [
-  {
-    path: ${pascalCase}PagePath.${constantCase},
-    lazy: async () => ({
-      Component: (await import("@/features/${featureName}/views/${pascalCase}View")).default,
-    }),
-  },
+// Route module paths are relative to \`src/\` (appDirectory in react-router.config.ts)
+const ${camelCase}Routes: RouteConfigEntry[] = [
+  route(${pascalCase}PagePath.${constantCase}, "features/${featureName}/views/${pascalCase}View.tsx"),
 ]
 
 export default ${camelCase}Routes
@@ -98,6 +94,7 @@ export const ${camelCase}Request = async (payload: ${pascalCase}RequestPayload):
 `,
 
   view: `import ${pascalCase}Component from "../components/${pascalCase}Component"
+import type { Route } from "./+types/${pascalCase}View"
 
 export default function ${pascalCase}View() {
   return (
@@ -106,6 +103,12 @@ export default function ${pascalCase}View() {
     </div>
   )
 }
+
+// Rendered into <head> at build time (prerender), so search engines see it
+export const meta: Route.MetaFunction = () => [
+  { title: "${pascalCase}" },
+  { name: "description", content: "${pascalCase} page." },
+]
 `,
 }
 
@@ -117,7 +120,7 @@ const structure = {
     [`${featureName}.id.ts`]: templates.language,
   },
   models: { "index.ts": templates.model },
-  routes: { "index.tsx": templates.route },
+  routes: { "index.ts": templates.route },
   services: { "api.ts": templates.service },
   stores: {},
   views: { [`${pascalCase}View.tsx`]: templates.view },
@@ -192,7 +195,7 @@ localeConfigs.forEach(updateLocaleFile)
 if (fs.existsSync(routerFilePath)) {
   let routerContent = addImport(
     fs.readFileSync(routerFilePath, "utf-8"),
-    `import ${camelCase}Routes from "@/features/${featureName}/routes"`,
+    `import ${camelCase}Routes from "./features/${featureName}/routes"`,
   )
 
   const spreadStatement = `...${camelCase}Routes`
@@ -216,11 +219,11 @@ if (fs.existsSync(routerFilePath)) {
       )
     }
   } else {
-    console.warn("⚠️ Could not find 'listRoutes' array in src/router/index.tsx")
+    console.warn("⚠️ Could not find 'listRoutes' array in src/routes.ts")
   }
 
   fs.writeFileSync(routerFilePath, routerContent, "utf-8")
-  console.log(`✅ Added ${camelCase}Routes to src/router/index.tsx`)
+  console.log(`✅ Added ${camelCase}Routes to src/routes.ts`)
 } else {
-  console.warn("⚠️ src/router/index.tsx not found, skipping route registration.")
+  console.warn("⚠️ src/routes.ts not found, skipping route registration.")
 }

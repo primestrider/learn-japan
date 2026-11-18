@@ -1,5 +1,6 @@
 import CommentsComponent from "../components/tanstack/CommentsComponent"
 import PostsComponent from "../components/tanstack/PostsComponent"
+import type { Route } from "./+types/ExampleTanstackView"
 
 export default function ExampleTanstackView() {
   return (
@@ -13,3 +14,8 @@ export default function ExampleTanstackView() {
     </section>
   )
 }
+
+export const meta: Route.MetaFunction = () => [
+  { title: "Example Tanstack" },
+  { name: "description", content: "Example TanStack Query page." },
+]

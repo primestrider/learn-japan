@@ -10,9 +10,13 @@ export type MessageSchema = (typeof languageMessages)["en"]
 
 const supportedLocales = Object.keys(languageMessages) as MessageLanguages[]
 
+const defaultLocale: MessageLanguages = "en"
+
+// Always start with the default locale so prerendered HTML and the first client
+// render match. `applyBrowserLocale()` switches after hydration.
 void i18n.use(initReactI18next).init({
-  lng: getBrowserLocale(supportedLocales, "en"),
-  fallbackLng: "en",
+  lng: defaultLocale,
+  fallbackLng: defaultLocale,
   supportedLngs: supportedLocales,
   resources: Object.fromEntries(
     supportedLocales.map((locale) => [locale, { translation: languageMessages[locale] }]),
@@ -21,6 +25,13 @@ void i18n.use(initReactI18next).init({
     escapeValue: false, // React already escapes
   },
 })
+
+/** Switch to the visitor's browser language (client only, after hydration). */
+export const applyBrowserLocale = () => {
+  const locale = getBrowserLocale(supportedLocales, defaultLocale)
+
+  if (locale !== i18n.language) void i18n.changeLanguage(locale)
+}
 
 type DotNotationKeys<T, Prefix extends string = ""> = {
   [K in keyof T]: T[K] extends string

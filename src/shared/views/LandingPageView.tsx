@@ -2,6 +2,8 @@ import { Link } from "react-router"
 
 import { ExamplePagePath } from "@/features/example/models"
 
+import type { Route } from "./+types/LandingPageView"
+
 export default function LandingPageView() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 px-6 text-gray-100">
@@ -40,3 +42,12 @@ export default function LandingPageView() {
     </div>
   )
 }
+
+export const meta: Route.MetaFunction = () => [
+  { title: "React Boilerplate" },
+  {
+    name: "description",
+    content:
+      "A clean and scalable starting point built with React 19, TypeScript, and Tailwind CSS v4.",
+  },
+]

@@ -7,7 +7,7 @@ import globals from "globals"
 import tseslint from "typescript-eslint"
 
 export default defineConfig([
-  globalIgnores(["dist"]),
+  globalIgnores(["dist", "build", ".react-router"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
@@ -17,6 +17,28 @@ export default defineConfig([
       reactRefresh.configs.vite,
       prettier,
     ],
+    rules: {
+      // Route modules export these next to the default component
+      "react-refresh/only-export-components": [
+        "warn",
+        {
+          allowExportNames: [
+            "meta",
+            "links",
+            "headers",
+            "handle",
+            "loader",
+            "clientLoader",
+            "action",
+            "clientAction",
+            "ErrorBoundary",
+            "HydrateFallback",
+            "Layout",
+            "shouldRevalidate",
+          ],
+        },
+      ],
+    },
     languageOptions: {
       globals: globals.browser,
     },

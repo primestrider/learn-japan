@@ -1,6 +1,7 @@
 import { Link } from "react-router"
 
 import { UtilsPagePath } from "../models"
+import type { Route } from "./+types/PageNotFound"
 
 export default function PageNotFound() {
   return (
@@ -13,3 +14,9 @@ export default function PageNotFound() {
     </div>
   )
 }
+
+export const meta: Route.MetaFunction = () => [
+  { title: "404 - Page Not Found" },
+  { name: "description", content: "The page you are looking for does not exist." },
+  { name: "robots", content: "noindex" },
+]
