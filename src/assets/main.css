@@ -1,17 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --animate-fade-in: fade-in 0.8s ease-out;
-  --animate-fade-in-slow: fade-in 1.5s ease-out;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
 
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+@layer base {
+  body {
+    @apply bg-stone-50 text-stone-800 antialiased;
+  }
+
+  /* System Japanese fonts: no multi-megabyte webfont download */
+  :lang(ja) {
+    font-family:
+      "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", YuGothic, Meiryo, "Noto Sans JP",
+      sans-serif;
   }
 }

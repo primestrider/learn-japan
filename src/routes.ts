@@ -1,8 +1,14 @@
-import type { RouteConfig } from "@react-router/dev/routes"
+import { type RouteConfig, index, route } from "@react-router/dev/routes"
 
-import exampleRoutes from "./features/example/routes"
+import lessonsRoutes from "./features/lessons/routes"
+import { localeRoutes } from "./shared/helpers/route"
 import utilRoutes from "./shared/routes"
 
-const listRoutes = [...exampleRoutes, ...utilRoutes]
+/** Pages available in every locale, declared without the locale prefix. */
+export const listRoutes = [...lessonsRoutes, ...utilRoutes]
 
-export default listRoutes satisfies RouteConfig
+export default [
+  // "/" is the language picker (hreflang x-default of the home page)
+  index("shared/views/LanguagePickerView.tsx"),
+  route(":lang", "shared/layouts/LocaleLayout.tsx", localeRoutes(listRoutes)),
+] satisfies RouteConfig

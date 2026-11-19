@@ -1,36 +1,46 @@
-import i18n, { type TOptions } from "i18next"
+import i18n, { type i18n as I18nInstance, type TOptions } from "i18next"
 import { initReactI18next } from "react-i18next"
 
-import { getBrowserLocale } from "./get-browser-locale"
+import { type Locale, defaultLocale, locales, toLocale } from "./config"
 import { languageMessages } from "./locales"
 
-export type MessageLanguages = keyof typeof languageMessages
+export type MessageLanguages = Locale
 
 export type MessageSchema = (typeof languageMessages)["en"]
 
-const supportedLocales = Object.keys(languageMessages) as MessageLanguages[]
-
-const defaultLocale: MessageLanguages = "en"
-
-// Always start with the default locale so prerendered HTML and the first client
-// render match. `applyBrowserLocale()` switches after hydration.
+/**
+ * Global instance: used by `translate()` outside components. The active locale
+ * layout keeps its language in sync with the URL (see LocaleLayout).
+ */
 void i18n.use(initReactI18next).init({
   lng: defaultLocale,
   fallbackLng: defaultLocale,
-  supportedLngs: supportedLocales,
+  supportedLngs: [...locales],
   resources: Object.fromEntries(
-    supportedLocales.map((locale) => [locale, { translation: languageMessages[locale] }]),
+    locales.map((locale) => [locale, { translation: languageMessages[locale] }]),
   ),
   interpolation: {
     escapeValue: false, // React already escapes
   },
 })
 
-/** Switch to the visitor's browser language (client only, after hydration). */
-export const applyBrowserLocale = () => {
-  const locale = getBrowserLocale(supportedLocales, defaultLocale)
+const instances = new Map<Locale, I18nInstance>()
 
-  if (locale !== i18n.language) void i18n.changeLanguage(locale)
+/**
+ * Instance pinned to one locale (taken from the URL). Rendering and `meta` use this
+ * instead of the global instance, so prerendered pages never depend on shared
+ * language state and the first client render matches the prerendered HTML.
+ */
+export const getI18n = (lang: unknown): I18nInstance => {
+  const locale = toLocale(lang)
+  let instance = instances.get(locale)
+
+  if (!instance) {
+    instance = i18n.cloneInstance({ lng: locale })
+    instances.set(locale, instance)
+  }
+
+  return instance
 }
 
 type DotNotationKeys<T, Prefix extends string = ""> = {

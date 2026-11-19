@@ -3,7 +3,7 @@
 This project follows a **feature-based architecture** with clearly separated modules for features, shared utilities, and global plugins. It is a **scalable React 19 starter kit** using Vite, TypeScript, React Router, Zustand, TailwindCSS, TanStack Query, and a best-practice folder structure (mirrors `vue-boilerplate`). It provides:
 
 - Organized feature-based architecture
-- SEO-ready: React Router framework mode, every page prerendered to static HTML with its own `<title>`/meta
+- SEO-ready: every page prerendered to static HTML in two languages (`/id/...`, `/en/...`) with title, description, canonical, hreflang, Open Graph, `sitemap.xml` and `robots.txt`
 - Built-in i18n support (typed translation keys)
 - Shared reusable components, hooks, and models
 - Auto-generated feature scaffolding (`create-feature` script)
@@ -37,7 +37,7 @@ npm run dev            # http://localhost:7600
 src/
 ├── assets/                       # Static styles and assets (CSS, images)
 ├── root.tsx                      # HTML document (<head>/<Meta/>), providers, error boundary
-├── routes.ts                     # Combines all feature routes (route config)
+├── routes.ts                     # Route tree: "/" language picker + `/:lang/...` feature routes
 
 ├── plugins/                      # Global library setup
 │   ├── axios/                    # Axios instance + interceptors (auth token, error shape)
@@ -84,10 +84,14 @@ src/
 
 ### Notes
 
-- **Routing / SEO**: routes are declared with `route("path", "features/x/views/XView.tsx")` (file paths are relative to `src/`). Each view can export `meta` for its `<title>`/description; it is written into the prerendered HTML. Nested child routes take a relative path — use `childPath(parent, path)` from `@/shared/helpers/route`.
-- **Prerender**: `react-router.config.ts` uses `ssr: false` + `prerender: true`, so every static route becomes `build/client/<path>/index.html`. For dynamic routes (e.g. `/kanji/:id`) make `prerender` an async function returning every URL. Unknown URLs use `build/client/__spa-fallback.html` — point your static host's fallback/404 page at it (not at `index.html`, which is the prerendered landing page). Local `npm run preview` only maps prerendered pages when the URL has a trailing slash (`/example/form/`); real static hosts map both.
+- **Languages & URLs**: every page exists per locale (`src/plugins/language/config.ts`): `/id/lessons/hiragana`, `/en/lessons/hiragana`. `/` is a language picker (hreflang `x-default`) that sends returning visitors to the language they used last; there is no automatic redirect by browser language, so crawlers can reach every version. The language comes from the URL (`getI18n(params.lang)` / `useTranslation()`), so translate the whole page, not only the UI.
+- **Routing**: feature routes are declared with absolute page paths, `route(XPagePath.X, "features/x/views/XView.tsx")` (file paths relative to `src/`), and nested under `/:lang` in `src/routes.ts`. Nested child routes take a relative path: `childPath(parent, path)` from `@/shared/helpers/route`. Links must keep the locale: `const localePath = useLocalePath(); <Link to={localePath(XPagePath.X)}>`.
+- **Lessons (content)**: `src/features/lessons/data/lessons/*.ts`, one file per lesson, typed by `Lesson` in `src/features/lessons/models`. Every text is `{ id, en }`. To add a lesson: create the file, then add it to the ordered `lessons` array in `src/features/lessons/data/index.ts`; it is prerendered in both languages, listed on the home page, linked prev/next, and added to the sitemap automatically. Lesson data is only read by route `loader`s at build time and reduced to the page's language with `pickLocale`, so it lands in the HTML, not in the JS bundle.
+- **Images**: `public/og-image.png` (1200×630, default share image for every page), `favicon.svg`, `favicon-48.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png` and `manifest.webmanifest`. Replace the files to rebrand; the site name is `SITE_NAME` in `src/shared/helpers/seo.ts`.
+- **SEO tags**: each view exports `meta` built with `seo({ lang: params.lang, path, title, description, noindex?, jsonLd? })` from `@/shared/helpers/seo`. It renders title, description, canonical, reciprocal hreflang (incl. `x-default`), Open Graph and optional JSON-LD into the prerendered HTML.
+- **Build / deploy**: `VITE_WEB_URL` (absolute site URL, e.g. `https://example.com`) is required for `npm run build`; it is used for canonical, hreflang and the sitemap. The build writes `build/client` with one `index.html` per page and locale, plus `sitemap.xml`, `robots.txt` and `404.html`. Deploy `build/client` to any static host (Cloudflare Pages, Netlify, Vercel); keep its "single-page app" rewrite off so `404.html` is served with a real 404 status. Canonical URLs have no trailing slash; configure the host not to redirect `/id/lessons/hiragana` to `/id/lessons/hiragana/`. Dynamic routes (e.g. `/lessons/:slug`) must add their URLs to `pagePaths` in `react-router.config.ts` (used for prerender and the sitemap).
+- **Local preview**: `npm run preview` only maps prerendered pages when the URL has a trailing slash (`/id/lessons/hiragana/`); real static hosts map both.
 - **No browser APIs during render**: pages are rendered in Node at build time, so `window`, `document`, `navigator`, `localStorage` may only be used inside effects or event handlers.
-- **Language**: the first render always uses the default locale (`en`) so prerendered HTML matches hydration; `applyBrowserLocale()` switches to the browser language afterwards.
 - **Translations**: inside components use `const { t } = useTranslation()` (re-renders on language change, keys are type-checked). Outside components use `translate()` from `@/plugins/language`.
 - **Backend form errors**: call react-hook-form's `setError(field, { type: "server", message })`; it is cleared automatically when the field is re-validated.
 - **Enums**: `erasableSyntaxOnly` is enabled, so use `as const` objects instead of TypeScript `enum`.

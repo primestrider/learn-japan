@@ -50,6 +50,11 @@ export default function ${pascalCase}Component() {
 
   language: `export default {
   feature_title: "This is ${pascalCase}",
+
+  meta: {
+    title: "${pascalCase}",
+    description: "${pascalCase} page.",
+  },
 }
 `,
 
@@ -93,7 +98,11 @@ export const ${camelCase}Request = async (payload: ${pascalCase}RequestPayload):
 }
 `,
 
-  view: `import ${pascalCase}Component from "../components/${pascalCase}Component"
+  view: `import { getI18n } from "@/plugins/language"
+import { seo } from "@/shared/helpers/seo"
+
+import ${pascalCase}Component from "../components/${pascalCase}Component"
+import { ${pascalCase}PagePath } from "../models"
 import type { Route } from "./+types/${pascalCase}View"
 
 export default function ${pascalCase}View() {
@@ -104,11 +113,17 @@ export default function ${pascalCase}View() {
   )
 }
 
-// Rendered into <head> at build time (prerender), so search engines see it
-export const meta: Route.MetaFunction = () => [
-  { title: "${pascalCase}" },
-  { name: "description", content: "${pascalCase} page." },
-]
+// Title, description, canonical, hreflang and Open Graph, prerendered per locale
+export const meta: Route.MetaFunction = ({ params }) => {
+  const { t } = getI18n(params.lang)
+
+  return seo({
+    lang: params.lang,
+    path: ${pascalCase}PagePath.${constantCase},
+    title: t("features.${camelCase}.meta.title"),
+    description: t("features.${camelCase}.meta.description"),
+  })
+}
 `,
 }
 
